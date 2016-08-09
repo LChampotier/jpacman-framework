@@ -29,7 +29,7 @@ public class DispersionMove implements MoveStrategy{
     private Direction [] cycle;
 
     /**
-     * Creates a dispersion mode for the specified ghost.
+     * Creates a dispersion move for the specified ghost.
      *
      * @param g
      *      The ghost at which this will be assigned.

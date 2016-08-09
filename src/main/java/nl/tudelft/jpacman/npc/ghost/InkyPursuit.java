@@ -24,36 +24,8 @@ public class InkyPursuit extends PursuitMove{
         Unit player = Navigation.findNearest(Player.class, origin);
 
         if (blinky != null && player != null) {
-            Square destination = twoSquaresAway(player.getDirection(), player.getSquare());
-            d = myPathTo(blinky.getSquare(),destination);
-        }
-
-        return d;
-    }
-
-    /**
-     * Path followed by Inky depending on Blinky's place and the square at two square in front of Pac-Man.
-     *
-     * @param blinkyPlace
-     * 		The square currently occupied by Blinky.
-     *
-     * @param destination
-     * 		The square at two square in front of Pac-Man.
-     *
-     * @return
-     * 		The next square where to go.
-     */
-    private Direction myPathTo(Square blinkyPlace, Square destination) {
-        Direction d = getGhost().randomMove();
-        Square origin = getGhost().getSquare();
-        List<Direction> firstHalf = Navigation.shortestPath(blinkyPlace,destination, null);
-
-        if(firstHalf != null){
-            for (Direction e : firstHalf) destination = destination.getSquareAt(e);
-
-            List<Direction> path = Navigation.shortestPath(origin,destination, getGhost());
-
-            if (path != null && !path.isEmpty()) d = path.get(0);
+            Square destination = destination(player.getDirection(), player.getSquare(), blinky.getSquare());
+            d = myPathTo(destination);
         }
 
         return d;
@@ -62,19 +34,65 @@ public class InkyPursuit extends PursuitMove{
     /**
      * Locate two squares in front of Pac-Man.
      *
-     * @param d
+     * @param playerDirection
      * 		The direction currently followed by Pac-Man.
      *
-     * @param s
+     * @param playerSquare
      * 		The Pac-Man current position.
      *
      * @return
      * 		Two squares in front of Pac-Man in his current direction of travel.
      */
-    private Square twoSquaresAway(Direction d, Square s){
+    private Square twoSquaresAway(Direction playerDirection, Square playerSquare){
 
-        for (int i = 0; i < SQUARES_AHEAD; i++) s = s.getSquareAt(d);
+        for (int i = 0; i < SQUARES_AHEAD; i++) {
+            playerSquare = playerSquare.getSquareAt(playerDirection);
+        }
 
-        return s;
+        return playerSquare;
+    }
+
+    /**
+     * Computes the distance between Blinky and Pac-Man and double it.
+     *
+     * @param blinkyPlace
+     *      The place where Blinky is.
+     *
+     * @param s
+     *      The place at two squares in front of Pac-Man place.
+     *
+     * @return
+     *      The real path to follow by Inky.
+     */
+    private List<Direction> placeToReach(Square blinkyPlace, Square s){
+        List<Direction> firstHalf = Navigation.shortestPath(blinkyPlace,s, null);
+
+        if(firstHalf != null) firstHalf.addAll(firstHalf);
+
+        return firstHalf;
+    }
+
+    /**
+     * Computes the place that Inky have to reach.
+     *
+     * @param playerDirection
+     *      The direction followed by Pac-Man.
+     *
+     * @param playerPlace
+     *      The current place occupied by Pac-Man.
+     *
+     * @param blinkyPlace
+     *      The current place occupied by Inky.
+     * @return
+     *      The place that Inky have to reach.
+     */
+    private Square destination(Direction playerDirection, Square playerPlace, Square blinkyPlace){
+        Square destination = twoSquaresAway(playerDirection, playerPlace);
+        List<Direction> path = placeToReach(blinkyPlace, destination);
+
+        if(path != null)
+            for (Direction e : path) destination = destination.getSquareAt(e);
+
+        return destination;
     }
 }

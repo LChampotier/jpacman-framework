@@ -1,7 +1,11 @@
 package nl.tudelft.jpacman.npc.ghost;
 
 /**
- * Created by UMONS on 18/04/2016.
+ * Created by NONO TATOU
  */
-public class blinkyPursuit {
+public class BlinkyPursuit extends PursuitMove {
+
+    public BlinkyPursuit(Ghost u) {
+        super(u);
+    }
 }
