@@ -63,8 +63,9 @@ public class Pinky extends Ghost {
 	 *            The sprites for this ghost.
 	 */
 	public Pinky(Map<Direction, Sprite> spriteMap) {
-
 		super(spriteMap);
+		setName("Pinky (Pink Ghost)");
+		setHomePlace("Upper left corner");
 		moveStrategies(new PinkyDispersion(this), new PinkyPursuit(this));
 	}
 

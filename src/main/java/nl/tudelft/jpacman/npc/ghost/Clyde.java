@@ -56,6 +56,8 @@ public class Clyde extends Ghost {
 	 */
 	public Clyde(Map<Direction, Sprite> spriteMap) {
 		super(spriteMap);
+		setName("Clyde (Orange Ghost)");
+		setHomePlace("Lower left corner");
 		moveStrategies(new ClydeDispersion(this), new ClydePursuit(this));
 	}
 

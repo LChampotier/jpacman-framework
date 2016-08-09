@@ -56,6 +56,8 @@ public class Blinky extends Ghost {
 	 */
 	public Blinky(Map<Direction, Sprite> spriteMap) {
 		super(spriteMap);
+		setName("Blinky (Red Ghost)");
+		setHomePlace("Upper right corner");
 		moveStrategies(new BlinkyDispersion(this), new BlinkyPursuit(this));
 	}
 

@@ -1,12 +1,12 @@
 package nl.tudelft.jpacman.game;
 
-import java.util.List;
-
+import com.google.common.collect.ImmutableList;
 import nl.tudelft.jpacman.board.Direction;
 import nl.tudelft.jpacman.level.Level;
 import nl.tudelft.jpacman.level.Player;
+import nl.tudelft.jpacman.npc.ghost.Ghost;
 
-import com.google.common.collect.ImmutableList;
+import java.util.List;
 
 /**
  * A game with one player and a single level.
@@ -45,6 +45,11 @@ public class SinglePlayerGame extends Game {
 	@Override
 	public List<Player> getPlayers() {
 		return ImmutableList.of(player);
+	}
+
+	@Override
+	public List<Ghost> getGhosts() {
+		return level.getGhosts();
 	}
 
 	@Override

@@ -60,6 +60,8 @@ public class Inky extends Ghost {
 	 */
 	public Inky(Map<Direction, Sprite> spriteMap) {
 		super(spriteMap);
+		setName("Inky (Turquoise Ghost)");
+		setHomePlace("Lower right corner");
 		moveStrategies(new InkyDispersion(this), new InkyPursuit(this));
 	}
 

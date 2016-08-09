@@ -5,11 +5,9 @@ import nl.tudelft.jpacman.board.Direction;
 import nl.tudelft.jpacman.board.Square;
 import nl.tudelft.jpacman.board.Unit;
 import nl.tudelft.jpacman.npc.NPC;
+import nl.tudelft.jpacman.npc.ghost.Ghost;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -66,6 +64,11 @@ public class Level {
 	private final List<Player> players;
 
 	/**
+	 * The ghosts on this level.
+	 */
+	private final List<Ghost> ghosts;
+
+	/**
 	 * The table of possible collisions between units.
 	 */
 	private final CollisionMap collisions;
@@ -96,8 +99,11 @@ public class Level {
 		this.board = b;
 		this.inProgress = false;
 		this.npcs = new HashMap<>();
-		for (NPC g : ghosts) {
+		this.ghosts = new ArrayList<>();
+
+		for (NPC g : ghosts){
 			npcs.put(g, null);
+			this.ghosts.add((Ghost) g);
 		}
 		this.startSquares = startPositions;
 		this.startSquareIndex = 0;
@@ -105,6 +111,8 @@ public class Level {
 		this.collisions = collisionMap;
 		this.observers = new ArrayList<>();
 	}
+
+	public List<Ghost> getGhosts(){ return ghosts; }
 
 	/**
 	 * Adds an observer that will be notified when the level is won or lost.
@@ -241,6 +249,7 @@ public class Level {
 	 */
 	private void stopNPCs() {
 		for (Entry<NPC, ScheduledExecutorService> e : npcs.entrySet()) {
+			e.getKey().done();
 			e.getValue().shutdownNow();
 		}
 	}

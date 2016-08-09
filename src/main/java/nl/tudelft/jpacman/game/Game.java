@@ -1,11 +1,12 @@
 package nl.tudelft.jpacman.game;
 
-import java.util.List;
-
 import nl.tudelft.jpacman.board.Direction;
 import nl.tudelft.jpacman.level.Level;
 import nl.tudelft.jpacman.level.Level.LevelObserver;
 import nl.tudelft.jpacman.level.Player;
+import nl.tudelft.jpacman.npc.ghost.Ghost;
+
+import java.util.List;
 
 /**
  * A basic implementation of a Pac-Man game.
@@ -72,6 +73,11 @@ public abstract class Game implements LevelObserver {
 	 * @return An immutable list of the participants of this game.
 	 */
 	public abstract List<Player> getPlayers();
+
+	/**
+	 * @return An immutable list of ghosts of this game.
+     */
+	public abstract List<Ghost> getGhosts();
 
 	/**
 	 * @return The level currently being played.
