@@ -195,7 +195,9 @@ public class GameModePanel extends JPanel{
     /** To execute for the sole game mode. */
     private void soloMode(){
         parent.setJMenuBar(menuBar);
+
         CardLayout cl = (CardLayout)panels.getLayout();
+        
         cl.show(panels, gamePanelName);
     }
 
