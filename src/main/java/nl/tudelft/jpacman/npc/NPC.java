@@ -2,6 +2,7 @@ package nl.tudelft.jpacman.npc;
 
 import nl.tudelft.jpacman.board.Direction;
 import nl.tudelft.jpacman.board.Unit;
+import nl.tudelft.jpacman.npc.ghost.Ghost;
 import nl.tudelft.jpacman.npc.ghost.MoveStrategy;
 
 /**
@@ -56,4 +57,7 @@ public abstract class NPC extends Unit {
 	 * 			The order.
 	 * 		*/
 	public abstract void stop(boolean s);
+
+	/** Converts to ghost. */
+	public Ghost toGhost(){ return (Ghost)this; }
 }
