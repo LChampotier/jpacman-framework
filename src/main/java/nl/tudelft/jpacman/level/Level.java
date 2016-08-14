@@ -111,7 +111,7 @@ public class Level {
 
 		for (NPC g : ghosts){
 			npcs.put(g, null);
-			this.ghosts.add((Ghost) g);
+			this.ghosts.add(g.toGhost());
 		}
 		this.startSquares = startPositions;
 		this.startSquareIndex = 0;
