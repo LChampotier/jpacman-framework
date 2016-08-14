@@ -42,7 +42,7 @@ public class LauncherSmokeTest {
 	 */
 	@After
 	public void tearDown() {
-		launcher.dispose();
+        Launcher.getTheOne().dispose();
 	}
 
     /**
@@ -55,7 +55,7 @@ public class LauncherSmokeTest {
     @SuppressWarnings("methodlength")
     @Test
     public void smokeTest() throws InterruptedException {
-        Game game = launcher.getGame();        
+        Game game = Launcher.getTheOne().getGame();
         Player player = game.getPlayers().get(0);
  
         // start cleanly.
