@@ -1,17 +1,14 @@
 package nl.tudelft.jpacman.ui;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
+import nl.tudelft.jpacman.game.Game;
+import nl.tudelft.jpacman.ui.ScorePanel.ScoreFormatter;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-
-import nl.tudelft.jpacman.game.Game;
-import nl.tudelft.jpacman.ui.ScorePanel.ScoreFormatter;
 
 /**
  * The default JPacMan UI frame. The PacManUI consists of the following
@@ -40,6 +37,9 @@ public class PacManUI extends JFrame {
 	 */
 	private static final int FRAME_INTERVAL = 40;
 
+	private final static String GAME_MODE_PANEL = "GameMode";
+	private final static String GAME_PANEL = "Game";
+
 	/**
 	 * The panel displaying the player scores.
 	 */
@@ -49,6 +49,12 @@ public class PacManUI extends JFrame {
 	 * The panel displaying the game.
 	 */
 	private final BoardPanel boardPanel;
+
+	/** The panel to show ghosts informations. */
+	private final GhostPanel ghostPanel;
+
+	/** The game engine. */
+	private ScheduledExecutorService service;
 
 	/**
 	 * Creates a new UI for a JPac-Man game.
@@ -65,7 +71,8 @@ public class PacManUI extends JFrame {
 	 *            The formatter used to display the current score. 
 	 */
 	public PacManUI(final Game game, final Map<String, Action> buttons,
-			final Map<Integer, Action> keyMappings, ScoreFormatter sf) {
+					final Map<Integer, Action> keyMappings, ScoreFormatter sf,
+					boolean ok) {
 		super("JPac-Man");
 		assert game != null;
 		assert buttons != null;
@@ -76,21 +83,43 @@ public class PacManUI extends JFrame {
 		PacKeyListener keys = new PacKeyListener(keyMappings);
 		addKeyListener(keys);
 
+		JMenuBar menuBar = new MenuBar(this).createMenuBar();
+		this.boardPanel = new BoardPanel(game);
 		JPanel buttonPanel = new ButtonPanel(buttons, this);
+		this.ghostPanel = new GhostPanel(game.getGhosts());
+		this.scorePanel = new ScorePanel(this, game);
 
-		scorePanel = new ScorePanel(game.getPlayers());
-		if (sf != null) {
-			scorePanel.setScoreFormatter(sf);
-		}
-		
-		boardPanel = new BoardPanel(game);
-		
-		Container contentPanel = getContentPane();
-		contentPanel.setLayout(new BorderLayout());
-		contentPanel.add(buttonPanel, BorderLayout.SOUTH);
-		contentPanel.add(scorePanel, BorderLayout.NORTH);
-		contentPanel.add(boardPanel, BorderLayout.CENTER);
+		if (sf != null)	scorePanel.setScoreFormatter(sf);
 
+		JPanel cards = new JPanel(new CardLayout());
+		JPanel gamePanel = new JPanel();
+		JPanel gameModePanel = new GameModePanel(this, menuBar, cards, GAME_PANEL);
+		JPanel panels = new JPanel(new BorderLayout());
+
+		gamePanel.setLayout(new BoxLayout(gamePanel, BoxLayout.PAGE_AXIS));
+		gamePanel.add(boardPanel);
+		gamePanel.add(Box.createRigidArea(new Dimension(0,3)));
+		gamePanel.add(buttonPanel);
+
+		panels.add(gamePanel, BorderLayout.CENTER);
+		panels.add(ghostPanel, BorderLayout.EAST);
+		panels.add(scorePanel, BorderLayout.SOUTH);
+
+		cards.add(GAME_MODE_PANEL, gameModePanel);
+		cards.add(GAME_PANEL, panels);
+
+		Container content = getContentPane();
+
+		content.setLayout(new BorderLayout());
+		content.add(cards, BorderLayout.CENTER);
+
+		if(ok) ((CardLayout)cards.getLayout()).show(cards, GAME_PANEL);
+
+		int w = getPreferredSize().width, h = ghostPanel.getPreferredSize().height + 67;
+		Dimension size = new Dimension(w, h);
+
+		setMinimumSize(size);
+		setPreferredSize(size);
 		pack();
 	}
 
@@ -101,8 +130,7 @@ public class PacManUI extends JFrame {
 	public void start() {
 		setVisible(true);
 
-		ScheduledExecutorService service = Executors
-				.newSingleThreadScheduledExecutor();
+		this.service = Executors.newSingleThreadScheduledExecutor();
 
 		service.scheduleAtFixedRate(new Runnable() {
 
@@ -114,11 +142,14 @@ public class PacManUI extends JFrame {
 
 	}
 
+	public void stop(){ service.shutdownNow(); }
+
 	/**
 	 * Draws the next frame, i.e. refreshes the scores and game.
 	 */
 	private void nextFrame() {
 		boardPanel.repaint();
 		scorePanel.refresh();
+		ghostPanel.refresh();
 	}
 }

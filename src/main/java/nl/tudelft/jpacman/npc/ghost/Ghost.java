@@ -14,8 +14,11 @@ import java.util.*;
  */
 public abstract class Ghost extends NPC {
 
-	private final static String DISPERSION_MODE = "Dispersion";
-	private final static String PURSUIT_MODE = "Pursuit";
+	/** Label for dispersion move strategy. */
+	private static final String DISPERSION_MODE = "Dispersion";
+
+	/** Label for pursuit move strategy. */
+	private static final String PURSUIT_MODE = "Pursuit";
 
 	/**
 	 * <code>name</code> : The ghost name.<br/>
@@ -25,7 +28,8 @@ public abstract class Ghost extends NPC {
 	 */
 	private String name, homePlace, moveStrategy, moveDuration, locationTarget;
 
-	private DurationTimer timer;
+	/** The countdown for move strategy duration. */
+	private DurationCountDown countDown;
 	
 	/**
 	 * The sprite map, one sprite for each direction.
@@ -54,7 +58,13 @@ public abstract class Ghost extends NPC {
 	 */
 	private boolean inMyCorner;
 
+	/**
+	 * For the end of the game.
+	 */
 	private boolean done;
+
+	/** The order to move or not. */
+	private boolean stop;
 
 	/**
 	 * Creates a new ghost.
@@ -67,6 +77,7 @@ public abstract class Ghost extends NPC {
 		this.altCounter = 0;
 		this.inMyCorner = false;
 		this.done = false;
+		this.stop = true;
 	}
 
 	@Override
@@ -137,8 +148,6 @@ public abstract class Ghost extends NPC {
 			setCurrentMove(dispersion());
 		}
 
-//		System.out.println(getName()+" "+timer.getState());
-
 		altCounter++;
 
 		return getCurrentMove();
@@ -166,8 +175,8 @@ public abstract class Ghost extends NPC {
 		moveDuration = (altCounter <= 2) ? "7" : "5";
 		locationTarget = "Home place("+getHomePlace()+")";
 
-		timer.setDuration(moveDuration);
-		timer.setStrategy(moveStrategy);
+		countDown.setDuration(moveDuration);
+		countDown.setStrategy(moveStrategy);
 
 		return dispersion;
 	}
@@ -183,14 +192,12 @@ public abstract class Ghost extends NPC {
 		if(altCounter <= 5){
 			moveDuration = "20";
 
-			timer.setDuration(moveDuration);
-		}else{
-			moveDuration = "∞";
+			countDown.setDuration(moveDuration);
 		}
 
 		locationTarget = "Pacman place";
 
-		timer.setStrategy(moveStrategy);
+		countDown.setStrategy(moveStrategy);
 
 		return pursuit;
 	}
@@ -217,10 +224,10 @@ public abstract class Ghost extends NPC {
 		this.currentMove = d;
 		this.moveStrategy = strategy;
 		this.moveDuration = duration;
-		this.timer = new DurationTimer(duration, strategy);
+		this.countDown = new DurationCountDown(duration, strategy);
 		this.locationTarget = location;
 
-		this.timer.start();
+		this.countDown.start();
 	}
 
 	/**
@@ -237,7 +244,9 @@ public abstract class Ghost extends NPC {
 	 *
 	 * @return A string representing the moveDuration move strategy of the ghost.
 	 */
-	public String getMoveDuration(){ return (altCounter <= 6) ? timer.getDuration() + " s" : ""; }
+	public String getMoveDuration(){
+		return (altCounter <= 6) ? countDown.getDuration() + " s" : "∞";
+	}
 
 	/**
 	 * Enables to know the place to reach by the ghost. In the particular case of dispersion move,
@@ -283,45 +292,56 @@ public abstract class Ghost extends NPC {
 		return path;
 	}
 
+	public void stop(boolean s){ stop = s; }
+
+	/**
+	 * Enables to know if the ghost is stopped or not.
+	 *
+	 * @return	<code>true</code> iff the ghost is stopped.
+     */
+	public boolean isStopped(){ return stop; }
+
 	public void done(){ done = true; }
 
-	protected boolean isDone(){ return done; }
+	/**
+	 * Enables to know if Pacman is dead or not.
+	 *
+	 * @return <code>true</code> iff Pacman is dead.
+     */
+	private boolean isDone(){ return done; }
 
-	private class DurationTimer extends Thread{
+	private class DurationCountDown extends Thread{
 
 		private String strategy;
 		private int d;
 		private boolean decrement;
 
-		public DurationTimer(String duration, String strategy){
+		public DurationCountDown(String duration, String strategy){
 			this.strategy = strategy;
 			this.d = Integer.parseInt(duration);
 			this.decrement = true;
 		}
 
 		@Override
-		public void run() {
-			while(decrement && !isDone()){
-				decrement();
-
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+		public void run() { while(decrement && !isDone()) decrement(); }
 
 		public void decrement(){
-			switch(strategy){
-				case DISPERSION_MODE:	if(isInMyCorner()) d--;
-										break;
+			if(!isStopped())
+				switch(strategy){
+					case DISPERSION_MODE:	if(isInMyCorner()) d--;
+											break;
 
-				case PURSUIT_MODE:		if(altCounter < 6 ) d--;
-										break;
-			}
+					case PURSUIT_MODE:		if(altCounter < 6) d--;
+											break;
+				}
 
 			if(d <= 0) d = 0;
+
+			try {
+				Thread.sleep(1187);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 
 		public String getDuration(){ return String.valueOf(d); }
@@ -329,7 +349,5 @@ public abstract class Ghost extends NPC {
 		public void setDuration(String duration){ d = Integer.parseInt(duration); }
 
 		public void setStrategy(String strategy){ this.strategy = strategy; }
-
-		public void stopDecrement(){ decrement = false; }
 	}
 }

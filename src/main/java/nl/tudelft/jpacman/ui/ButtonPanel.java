@@ -1,6 +1,7 @@
 package nl.tudelft.jpacman.ui;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Map;
@@ -39,5 +40,7 @@ class ButtonPanel extends JPanel {
 			});
 			add(button);
 		}
+
+		setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
 	}
 }

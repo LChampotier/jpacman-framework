@@ -48,8 +48,12 @@ public abstract class NPC extends Unit {
      */
 	public abstract boolean inPursuitMove();
 
-	/**
-	 *	Announces the end of the game.
-	 */
+	/** Announces the end of the game. */
 	public abstract void done();
+
+	/** Orders to the ghost to stop or not.
+	 * @param s
+	 * 			The order.
+	 * 		*/
+	public abstract void stop(boolean s);
 }

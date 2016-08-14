@@ -1,11 +1,11 @@
 package nl.tudelft.jpacman.level;
 
-import java.util.Map;
-
 import nl.tudelft.jpacman.board.Direction;
 import nl.tudelft.jpacman.board.Unit;
 import nl.tudelft.jpacman.sprite.AnimatedSprite;
 import nl.tudelft.jpacman.sprite.Sprite;
+
+import java.util.Map;
 
 /**
  * A player operated unit in our game.
@@ -66,12 +66,9 @@ public class Player extends Unit {
 	 *            <code>true</code> iff this player is alive.
 	 */
 	public void setAlive(boolean isAlive) {
-		if (isAlive) {
-			deathSprite.setAnimating(false);
-		}
-		if (!isAlive) {
-			deathSprite.restart();
-		}
+		if (isAlive)  deathSprite.setAnimating(false);
+		if (!isAlive) deathSprite.restart();
+
 		this.alive = isAlive;
 	}
 
@@ -86,10 +83,11 @@ public class Player extends Unit {
 
 	@Override
 	public Sprite getSprite() {
-		if (isAlive()) {
-			return sprites.get(getDirection());
-		}
-		return deathSprite;
+		Sprite s = deathSprite;
+
+		if (isAlive()) s = sprites.get(getDirection());
+
+		return s;
 	}
 
 	/**

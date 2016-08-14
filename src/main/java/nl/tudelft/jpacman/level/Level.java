@@ -48,6 +48,9 @@ public class Level {
 	 */
 	private boolean inProgress;
 
+	/** Enables to know if the game started. */
+	private boolean started;
+
 	/**
 	 * The squares from which players can start this game.
 	 */
@@ -57,6 +60,9 @@ public class Level {
 	 * The start current selected starting square.
 	 */
 	private int startSquareIndex;
+
+	/** To memorize move ghosts data. */
+	private int[] memory;
 
 	/**
 	 * The players on this level.
@@ -98,8 +104,10 @@ public class Level {
 
 		this.board = b;
 		this.inProgress = false;
+		this.started = false;
 		this.npcs = new HashMap<>();
 		this.ghosts = new ArrayList<>();
+		this.memory = new int[]{0, 7000, 0};
 
 		for (NPC g : ghosts){
 			npcs.put(g, null);
@@ -121,9 +129,8 @@ public class Level {
 	 *            The observer that will be notified.
 	 */
 	public void addObserver(LevelObserver observer) {
-		if (observers.contains(observer)) {
-			return;
-		}
+		if (observers.contains(observer)) return;
+
 		observers.add(observer);
 	}
 
@@ -149,9 +156,8 @@ public class Level {
 		assert p != null;
 		assert !startSquares.isEmpty();
 
-		if (players.contains(p)) {
-			return;
-		}
+		if (players.contains(p)) return;
+
 		players.add(p);
 		Square square = startSquares.get(startSquareIndex);
 		p.occupy(square);
@@ -181,9 +187,7 @@ public class Level {
 		assert unit != null;
 		assert direction != null;
 
-		if (!isInProgress()) {
-			return;
-		}
+		if (!isInProgress()) return;
 
 		synchronized (moveLock) {
 			unit.setDirection(direction);
@@ -193,9 +197,7 @@ public class Level {
 			if (destination.isAccessibleTo(unit)) {
 				List<Unit> occupants = destination.getOccupants();
 				unit.occupy(destination);
-				for (Unit occupant : occupants) {
-					collisions.collide(unit, occupant);
-				}
+				for (Unit occupant : occupants) collisions.collide(unit, occupant);
 			}
 			updateObservers();
 		}
@@ -207,14 +209,23 @@ public class Level {
 	 */
 	public void start() {
 		synchronized (startStopLock) {
-			if (isInProgress()) {
-				return;
-			}
+			if(isInProgress())  return;
+			if(!hasStarted()) started = true;
+
 			startNPCs();
+
 			inProgress = true;
+
 			updateObservers();
 		}
 	}
+
+	/**
+	 * Enables to know the game started or not.
+	 *
+	 * @return	<code>true</code> iff the game started.
+	 */
+	public boolean hasStarted(){ return started; }
 
 	/**
 	 * Stops or pauses this level, no longer allowing any movement on the board
@@ -222,9 +233,8 @@ public class Level {
 	 */
 	public void stop() {
 		synchronized (startStopLock) {
-			if (!isInProgress()) {
-				return;
-			}
+			if(!isInProgress())  return;
+
 			stopNPCs();
 			inProgress = false;
 		}
@@ -237,8 +247,10 @@ public class Level {
 		for (final NPC npc : npcs.keySet()) {
 			ScheduledExecutorService service = Executors
 					.newSingleThreadScheduledExecutor();
-			service.schedule(new NpcMoveTask(service, npc),
-					npc.getInterval() / 2, TimeUnit.MILLISECONDS);
+
+			service.schedule(new NpcMoveTask(service, npc, memory),
+							 npc.getInterval() / 2, TimeUnit.MILLISECONDS);
+			npc.stop(false);
 			npcs.put(npc, service);
 		}
 	}
@@ -249,7 +261,9 @@ public class Level {
 	 */
 	private void stopNPCs() {
 		for (Entry<NPC, ScheduledExecutorService> e : npcs.entrySet()) {
-			e.getKey().done();
+			if(!isAnyPlayerAlive() || remainingPellets() == 0) e.getKey().done();
+
+			e.getKey().stop(true);
 			e.getValue().shutdownNow();
 		}
 	}
@@ -268,16 +282,11 @@ public class Level {
 	 * Updates the observers about the state of this level.
 	 */
 	private void updateObservers() {
-		if (!isAnyPlayerAlive()) {
-			for (LevelObserver o : observers) {
-				o.levelLost();
-			}
-		}
-		if (remainingPellets() == 0) {
-			for (LevelObserver o : observers) {
-				o.levelWon();
-			}
-		}
+		if (!isAnyPlayerAlive())
+			for (LevelObserver o : observers) o.levelLost();
+
+		if (remainingPellets() == 0)
+			for (LevelObserver o : observers) o.levelWon();
 	}
 
 	/**
@@ -288,13 +297,14 @@ public class Level {
 	 *         alive.
 	 */
 	public boolean isAnyPlayerAlive() {
-		for (Player p : players) {
-			if (p.isAlive()) {
-				return true;
-			}
-		}
-		return false;
+		boolean alive = false;
+
+		for (Player p : players)
+			if (p.isAlive()) alive = true;
+
+		return alive;
 	}
+
 
 	/**
 	 * Counts the pellets remaining on the board.
@@ -304,16 +314,13 @@ public class Level {
 	public int remainingPellets() {
 		Board b = getBoard();
 		int pellets = 0;
-		for (int x = 0; x < b.getWidth(); x++) {
-			for (int y = 0; y < b.getHeight(); y++) {
-				for (Unit u : b.squareAt(x, y).getOccupants()) {
-					if (u instanceof Pellet) {
-						pellets++;
-					}
-				}
-			}
-		}
+		for (int x = 0; x < b.getWidth(); x++)
+			for (int y = 0; y < b.getHeight(); y++)
+				for (Unit u : b.squareAt(x, y).getOccupants())
+					if (u instanceof Pellet) pellets++;
+
 		return pellets;
+
 	}
 
 	/**
@@ -355,9 +362,13 @@ public class Level {
 		private NpcMoveTask(ScheduledExecutorService s, NPC n) {
 			this.service = s;
 			this.npc = n;
-			this.time = 0;
-			this.duration = 7000;
-			this.counter = 0;
+		}
+
+		private NpcMoveTask(ScheduledExecutorService s, NPC n, int[] m) {
+			this(s, n);
+			this.time = m[0];
+			this.duration = m[1];
+			this.counter = m[2];
 		}
 
 		@Override
@@ -375,6 +386,7 @@ public class Level {
 				move(npc, nextMove);
 			}
 			long interval = npc.getInterval();
+
 			service.schedule(this, interval, TimeUnit.MILLISECONDS);
 		}
 
@@ -385,14 +397,17 @@ public class Level {
 		 * 		The time spent in move mode.
          */
 		private long timer(){
-			return this.time += 238;
+			time += 238;
+			memory[0] = (int)time;
+
+			return time;
 		}
 
 		/**
 		 * Reset <code>time</code>.
 		 */
 		private void resetTimer(){
-			this.time = 0;
+			time = 0;
 		}
 
 		/**
@@ -402,7 +417,8 @@ public class Level {
 		 * 		The new duration.
          */
 		private void setDuration(int d){
-			this.duration = d;
+			duration = d;
+			memory[1] = d;
 		}
 
 		/**
@@ -417,7 +433,8 @@ public class Level {
 		 * It counts the transition from one move mode to another.
 		 */
 		private void incrementCounter(){
-			this.counter++;
+			counter++;
+			memory[2] = counter;
 		}
 
 		/**
@@ -425,14 +442,14 @@ public class Level {
 		 * 		The number of transition already did.
          */
 		private int getCounter(){
-			return this.counter;
+			return counter;
 		}
 
 		/**
 		 * To pass to the pursuit mode.
 		 */
 		private void pursuit(){
-			if((timer()/getDuration())>=1){
+			if((timer()/getDuration()) >= 1){
 				npc.changeMove();
 				incrementCounter();
 				resetTimer();
@@ -444,7 +461,7 @@ public class Level {
 		 * To pass to the dispersion mode.
 		 */
 		private void dispersion(){
-			if((timer()/getDuration())>=1){
+			if((timer()/getDuration()) >= 1){
 				npc.changeMove();
 				incrementCounter();
 				resetTimer();

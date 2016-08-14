@@ -28,10 +28,10 @@ public class GameModePanel extends JPanel{
     private String gamePanelName;
 
     /** Caption for the solo game mode button. */
-    private final static String SOLO_MODE = "Solo";
+    private static final String SOLO_MODE = "Solo";
 
     /** Caption for the I.A. game mode button. */
-    private final static String IA_MODE = "I.A.";
+    private static final String IA_MODE = "I.A.";
 
     /**
      * Creates a panel for the game mode choice. For this JPac-Man we have only two game mode.
@@ -53,15 +53,16 @@ public class GameModePanel extends JPanel{
 
         init(parent, menuBar, panels, gamePanelName);
 
+
         GridBagLayout gBL = new GridBagLayout();
         gBL.columnWidths = new int[]{0, 0, 0, 0, 0, 0};
         gBL.rowHeights = new int[]{0, 0, 0, 0, 0, 0, 0, 0, 0};
         gBL.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
         gBL.rowWeights = new double[]{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
+
         setLayout(gBL);
 
         GridBagConstraints gBC = new GridBagConstraints();
-
         lbl = new JLabel("JPac-Man");
 
         lbl.setFont(new Font("Tahoma", Font.BOLD, 29));
@@ -94,13 +95,12 @@ public class GameModePanel extends JPanel{
 
         gBC.anchor = GridBagConstraints.SOUTH;
         gBC.fill = GridBagConstraints.HORIZONTAL;
-        gBC.weighty = 0.2;
         gBC.insets = new Insets(19, 5, 0, 0);
         gBC.gridx = 0;
         gBC.gridy = 7;
         add(lbl, gBC);
 
-        lbl = new JLabel("gX",SwingConstants.RIGHT);
+        lbl = new JLabel("g6",SwingConstants.RIGHT);
 
         lbl.setPreferredSize(new Dimension(56,14));
         lbl.setMinimumSize(new Dimension(56,14));
@@ -174,6 +174,7 @@ public class GameModePanel extends JPanel{
                                     soloMode();
                                 }
                             });
+
                             break;
 
             case IA_MODE:   btn.addActionListener(new ActionListener() {
@@ -182,6 +183,8 @@ public class GameModePanel extends JPanel{
                                     iaMode();
                                 }
                             });
+                            btn.setEnabled(false);
+
                             break;
         }
 
@@ -195,10 +198,7 @@ public class GameModePanel extends JPanel{
     /** To execute for the sole game mode. */
     private void soloMode(){
         parent.setJMenuBar(menuBar);
-
-        CardLayout cl = (CardLayout)panels.getLayout();
-        
-        cl.show(panels, gamePanelName);
+        ((CardLayout)panels.getLayout()).show(panels, gamePanelName);
     }
 
     /** To execute for the I.A. game mode. */
