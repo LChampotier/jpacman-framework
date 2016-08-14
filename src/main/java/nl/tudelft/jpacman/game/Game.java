@@ -37,9 +37,8 @@ public abstract class Game implements LevelObserver {
 	 */
 	public void start() {
 		synchronized (progressLock) {
-			if (isInProgress()) {
-				return;
-			}
+			if (isInProgress()) return;
+
 			if (getLevel().isAnyPlayerAlive()
 					&& getLevel().remainingPellets() > 0) {
 				inProgress = true;
@@ -50,13 +49,19 @@ public abstract class Game implements LevelObserver {
 	}
 
 	/**
+	 * Enables to know the game started or not.
+	 *
+	 * @return	<code>true</code> iff the game started.
+     */
+	public boolean hasStarted(){ return getLevel().hasStarted(); }
+
+	/**
 	 * Pauses the game.
 	 */
 	public void stop() {
 		synchronized (progressLock) {
-			if (!isInProgress()) {
-				return;
-			}
+			if (!isInProgress())  return;
+
 			inProgress = false;
 			getLevel().stop();
 		}
