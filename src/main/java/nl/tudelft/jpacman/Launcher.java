@@ -28,8 +28,16 @@ public class Launcher {
 	private PacManUI pacManUI;
 	private Game game;
 
+	private Launcher(){}
+
+	private static class TheOneLauncher{
+		private static final Launcher theOne = new Launcher();
+	}
+
+	public static Launcher getTheOne(){ return TheOneLauncher.theOne; }
+
 	/**
-	 * @return The game object this launcher will start when {@link #launch()}
+	 * @return The game object this launcher will start when {@link #relaunch(boolean)}
 	 *         is called.
 	 */
 	public Game getGame() {
@@ -165,13 +173,18 @@ public class Launcher {
 	}
 
 	/**
-	 * Creates and starts a JPac-Man game.
+	 * Creates and starts or restarts a JPac-Man game.
 	 */
-	public void launch() {
+	public void relaunch(boolean ok){
 		game = makeGame();
 		PacManUiBuilder builder = new PacManUiBuilder().withDefaultButtons();
+
 		addSinglePlayerKeys(builder, game);
-		pacManUI = builder.build(game);
+
+		if(ok) dispose();
+
+		pacManUI = builder.build(game, ok);
+
 		pacManUI.start();
 	}
 
@@ -179,6 +192,7 @@ public class Launcher {
 	 * Disposes of the UI. For more information see {@link javax.swing.JFrame#dispose()}.
 	 */
 	public void dispose() {
+		pacManUI.stop();
 		pacManUI.dispose();
 	}
 
@@ -191,6 +205,6 @@ public class Launcher {
 	 *             When a resource could not be read.
 	 */
 	public static void main(String[] args) throws IOException {
-		new Launcher().launch();
+		Launcher.getTheOne().relaunch(false);
 	}
 }
